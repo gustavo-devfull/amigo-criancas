@@ -1,67 +1,67 @@
 import React, { useState } from 'react';
-import { Modal, Button, Form, Tabs, Tab } from 'react-bootstrap';
+import { Modal, Button, Form } from 'react-bootstrap';
 import { addPresente, updatePresente, uploadImage } from '../services/presentesService';
 import { AMIGOS } from '../data/amigos';
 
 const PresenteForm = ({ show, handleClose, presente = null, amigoPreSelecionado = null, onSuccess }) => {
-  const [activeTab, setActiveTab] = useState('imagem-url');
+  const [tipoMidia, setTipoMidia] = useState('nenhum'); // 'nenhum', 'link', 'upload'
   const [loading, setLoading] = useState(false);
   const [amigoSelecionado, setAmigoSelecionado] = useState('');
   
-  // Estado para formulário com nome e descrição
-  const [nomeDescricaoForm, setNomeDescricaoForm] = useState({
-    nome: '',
-    descricao: ''
-  });
-  
-  // Estado para formulário com link
-  const [linkForm, setLinkForm] = useState({
-    link: '',
-    descricao: ''
-  });
-  
-  // Estado para formulário com upload
-  const [uploadForm, setUploadForm] = useState({
+  // Estado unificado do formulário
+  const [formData, setFormData] = useState({
     nome: '',
     descricao: '',
+    link: '',
     imagemFile: null,
     imagemPreview: null
   });
 
-  // Resetar formulários quando o modal abrir/fechar
+  // Resetar formulário quando o modal abrir/fechar
   React.useEffect(() => {
     if (show) {
       if (presente) {
         // Modo edição
         setAmigoSelecionado(presente.amigo || '');
-        if (presente.tipo === 'nome-descricao' || (presente.nome && presente.descricao && !presente.link && !presente.imagemStorage && !presente.imagemUrl)) {
-          setNomeDescricaoForm({
-            nome: presente.nome || '',
-            descricao: presente.descricao || ''
+        if (presente.link) {
+          setTipoMidia('link');
+          setFormData({
+            nome: '',
+            descricao: presente.descricao || '',
+            link: presente.link || '',
+            imagemFile: null,
+            imagemPreview: null
           });
-          setActiveTab('imagem-url');
-        } else if (presente.link) {
-          setLinkForm({
-            link: presente.link,
-            descricao: presente.descricao || ''
-          });
-          setActiveTab('link');
-        } else if (presente.imagemStorage) {
-          setUploadForm({
+        } else if (presente.imagemStorage || presente.imagemUrl) {
+          setTipoMidia('upload');
+          setFormData({
             nome: presente.nome || '',
             descricao: presente.descricao || '',
+            link: '',
             imagemFile: null,
-            imagemPreview: presente.imagemStorage
+            imagemPreview: presente.imagemStorage || presente.imagemUrl || null
           });
-          setActiveTab('upload');
+        } else {
+          setTipoMidia('nenhum');
+          setFormData({
+            nome: presente.nome || '',
+            descricao: presente.descricao || '',
+            link: '',
+            imagemFile: null,
+            imagemPreview: null
+          });
         }
       } else {
         // Modo criação - resetar tudo
         setAmigoSelecionado(amigoPreSelecionado || '');
-        setNomeDescricaoForm({ nome: '', descricao: '' });
-        setLinkForm({ link: '', descricao: '' });
-        setUploadForm({ nome: '', descricao: '', imagemFile: null, imagemPreview: null });
-        setActiveTab('imagem-url');
+        setTipoMidia('nenhum');
+        setFormData({
+          nome: '',
+          descricao: '',
+          link: '',
+          imagemFile: null,
+          imagemPreview: null
+        });
       }
     }
   }, [show, presente, amigoPreSelecionado]);
@@ -71,14 +71,21 @@ const PresenteForm = ({ show, handleClose, presente = null, amigoPreSelecionado 
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setUploadForm({
-          ...uploadForm,
+        setFormData({
+          ...formData,
           imagemFile: file,
           imagemPreview: reader.result
         });
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData({
+      ...formData,
+      [field]: value
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -94,48 +101,47 @@ const PresenteForm = ({ show, handleClose, presente = null, amigoPreSelecionado 
         return;
       }
 
-      if (activeTab === 'imagem-url') {
-        if (!nomeDescricaoForm.nome || !nomeDescricaoForm.descricao) {
+      if (tipoMidia === 'nenhum') {
+        if (!formData.nome || !formData.descricao) {
           alert('Por favor, preencha todos os campos');
           setLoading(false);
           return;
         }
         presenteData = {
-          nome: nomeDescricaoForm.nome,
-          descricao: nomeDescricaoForm.descricao,
+          nome: formData.nome,
+          descricao: formData.descricao,
           tipo: 'nome-descricao',
           amigo: amigoSelecionado
         };
-      } else if (activeTab === 'link') {
-        if (!linkForm.link || !linkForm.descricao) {
+      } else if (tipoMidia === 'link') {
+        if (!formData.link || !formData.descricao) {
           alert('Por favor, preencha todos os campos');
           setLoading(false);
           return;
         }
         presenteData = {
-          link: linkForm.link,
-          descricao: linkForm.descricao,
+          link: formData.link,
+          descricao: formData.descricao,
           tipo: 'link',
           amigo: amigoSelecionado
         };
-      } else if (activeTab === 'upload') {
-        if (!uploadForm.nome || !uploadForm.descricao || (!uploadForm.imagemFile && !uploadForm.imagemPreview)) {
+      } else if (tipoMidia === 'upload') {
+        if (!formData.nome || !formData.descricao || (!formData.imagemFile && !formData.imagemPreview)) {
           alert('Por favor, preencha todos os campos');
           setLoading(false);
           return;
         }
         
-        let imagemUrl = uploadForm.imagemPreview;
+        let imagemUrl = formData.imagemPreview;
         
         // Se há um novo arquivo, fazer upload
-        // O nome será alterado para Amigo_N.extensão no servidor
-        if (uploadForm.imagemFile) {
-          imagemUrl = await uploadImage(uploadForm.imagemFile, amigoSelecionado);
+        if (formData.imagemFile) {
+          imagemUrl = await uploadImage(formData.imagemFile, amigoSelecionado);
         }
         
         presenteData = {
-          nome: uploadForm.nome,
-          descricao: uploadForm.descricao,
+          nome: formData.nome,
+          descricao: formData.descricao,
           imagemStorage: imagemUrl,
           tipo: 'upload',
           amigo: amigoSelecionado
@@ -152,7 +158,6 @@ const PresenteForm = ({ show, handleClose, presente = null, amigoPreSelecionado 
 
       handleClose();
       if (onSuccess) {
-        // Passar o nome do amigo para expandir o accordion
         onSuccess(amigoSelecionado);
       }
     } catch (error) {
@@ -164,133 +169,152 @@ const PresenteForm = ({ show, handleClose, presente = null, amigoPreSelecionado 
     }
   };
 
+  const amigoNome = amigoSelecionado || amigoPreSelecionado || '';
+
   return (
     <Modal show={show} onHide={handleClose} size="lg" centered>
-      <Modal.Header closeButton className="pb-3">
-        <Modal.Title className="h5 h-md-4" style={{ fontSize: 'clamp(1.25rem, 2vw, 1.75rem)' }}>
+      <Modal.Header closeButton>
+        <Modal.Title style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
           {presente ? 'Editar Presente' : 'Adicionar Presente'}
         </Modal.Title>
       </Modal.Header>
-      <Modal.Body className="px-3 px-md-4 py-4">
-        <Form.Group className="mb-3">
-          <Form.Label>Amigo</Form.Label>
-          <Form.Select
-            value={amigoSelecionado}
-            onChange={(e) => setAmigoSelecionado(e.target.value)}
-            required
-          >
-            <option value="">Selecione um amigo</option>
-            {AMIGOS.map((amigo) => (
-              <option key={amigo} value={amigo}>
-                {amigo}
-              </option>
-            ))}
-          </Form.Select>
-        </Form.Group>
-        <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k)} className="mb-3">
-          <Tab eventKey="imagem-url" title="Nome e Descrição">
-            <Form onSubmit={handleSubmit}>
-              <Form.Group className="mb-3">
-                <Form.Label>Nome do Presente</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Digite o nome do presente"
-                  value={nomeDescricaoForm.nome}
-                  onChange={(e) => setNomeDescricaoForm({ ...nomeDescricaoForm, nome: e.target.value })}
-                  required
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Descrição</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={4}
-                  placeholder="Descreva o presente..."
-                  value={nomeDescricaoForm.descricao}
-                  onChange={(e) => setNomeDescricaoForm({ ...nomeDescricaoForm, descricao: e.target.value })}
-                  required
-                />
-              </Form.Group>
-            </Form>
-          </Tab>
+      <Modal.Body className="px-4 py-4">
+        {amigoNome && (
+          <p style={{ marginBottom: '1.5rem', color: '#6c757d' }}>
+            Adicione uma sugestão de presente para {amigoNome}.
+          </p>
+        )}
+        
+        <Form onSubmit={handleSubmit}>
+          <Form.Group className="mb-3">
+            <Form.Label style={{ fontWeight: '500', marginBottom: '0.5rem' }}>
+              Amigo
+            </Form.Label>
+            <Form.Select
+              value={amigoSelecionado}
+              onChange={(e) => setAmigoSelecionado(e.target.value)}
+              required
+              disabled={!!amigoPreSelecionado}
+            >
+              <option value="">Selecione um amigo</option>
+              {AMIGOS.map((amigo) => (
+                <option key={amigo} value={amigo}>
+                  {amigo}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
 
-          <Tab eventKey="link" title="Link e Descrição">
-            <Form onSubmit={handleSubmit}>
-              <Form.Group className="mb-3">
-                <Form.Label>Link do Presente</Form.Label>
-                <Form.Control
-                  type="url"
-                  placeholder="https://exemplo.com/produto"
-                  value={linkForm.link}
-                  onChange={(e) => setLinkForm({ ...linkForm, link: e.target.value })}
-                  required
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Descrição</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={4}
-                  placeholder="Descreva o presente..."
-                  value={linkForm.descricao}
-                  onChange={(e) => setLinkForm({ ...linkForm, descricao: e.target.value })}
-                  required
-                />
-              </Form.Group>
-            </Form>
-          </Tab>
+          <Form.Group className="mb-3">
+            <Form.Label style={{ fontWeight: '500', marginBottom: '0.5rem' }}>
+              Nome do Presente
+            </Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Ex: Livro de Ficção"
+              value={formData.nome}
+              onChange={(e) => handleInputChange('nome', e.target.value)}
+              required={tipoMidia !== 'link'}
+            />
+          </Form.Group>
 
-          <Tab eventKey="upload" title="Presente e Foto">
-            <Form onSubmit={handleSubmit}>
-              <Form.Group className="mb-3">
-                <Form.Label>Nome do Presente</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Digite o nome do presente"
-                  value={uploadForm.nome}
-                  onChange={(e) => setUploadForm({ ...uploadForm, nome: e.target.value })}
-                  required
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Descrição</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={4}
-                  placeholder="Descreva o presente..."
-                  value={uploadForm.descricao}
-                  onChange={(e) => setUploadForm({ ...uploadForm, descricao: e.target.value })}
-                  required
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Imagem</Form.Label>
-                <Form.Control
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageFileChange}
-                  required={!uploadForm.imagemPreview}
-                />
-                {uploadForm.imagemPreview && (
-                  <div className="mt-2">
-                    <img 
-                      src={uploadForm.imagemPreview} 
-                      alt="Preview" 
-                      style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }}
-                    />
-                  </div>
-                )}
-              </Form.Group>
-            </Form>
-          </Tab>
-        </Tabs>
+          <Form.Group className="mb-3">
+            <Form.Label style={{ fontWeight: '500', marginBottom: '0.75rem' }}>
+              Tipo de Mídia
+            </Form.Label>
+            <div>
+              <Form.Check
+                type="radio"
+                id="tipo-nenhum"
+                name="tipoMidia"
+                label="Nenhum (Apenas texto)"
+                checked={tipoMidia === 'nenhum'}
+                onChange={() => setTipoMidia('nenhum')}
+                className="mb-2"
+              />
+              <Form.Check
+                type="radio"
+                id="tipo-link"
+                name="tipoMidia"
+                label="Link"
+                checked={tipoMidia === 'link'}
+                onChange={() => setTipoMidia('link')}
+                className="mb-2"
+              />
+              <Form.Check
+                type="radio"
+                id="tipo-upload"
+                name="tipoMidia"
+                label="Upload de Foto"
+                checked={tipoMidia === 'upload'}
+                onChange={() => setTipoMidia('upload')}
+              />
+            </div>
+          </Form.Group>
+
+          {tipoMidia === 'link' && (
+            <Form.Group className="mb-3">
+              <Form.Label style={{ fontWeight: '500', marginBottom: '0.5rem' }}>
+                Link
+              </Form.Label>
+              <Form.Control
+                type="url"
+                placeholder="https://exemplo.com/produto"
+                value={formData.link}
+                onChange={(e) => handleInputChange('link', e.target.value)}
+                required
+              />
+            </Form.Group>
+          )}
+
+          {tipoMidia === 'upload' && (
+            <Form.Group className="mb-3">
+              <Form.Label style={{ fontWeight: '500', marginBottom: '0.5rem' }}>
+                Foto
+              </Form.Label>
+              <Form.Control
+                type="file"
+                accept="image/*"
+                onChange={handleImageFileChange}
+                required={!formData.imagemPreview}
+              />
+              {formData.imagemPreview && (
+                <div className="mt-2">
+                  <img 
+                    src={formData.imagemPreview} 
+                    alt="Preview" 
+                    style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain', borderRadius: '4px' }}
+                  />
+                </div>
+              )}
+            </Form.Group>
+          )}
+
+          <Form.Group className="mb-3">
+            <Form.Label style={{ fontWeight: '500', marginBottom: '0.5rem' }}>
+              Descrição / Observação
+            </Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={4}
+              placeholder="Detalhes adicionais, tamanho, cor, etc."
+              value={formData.descricao}
+              onChange={(e) => handleInputChange('descricao', e.target.value)}
+              required
+            />
+          </Form.Group>
+        </Form>
       </Modal.Body>
-      <Modal.Footer className="d-flex flex-column flex-md-row gap-2 gap-md-0">
+      <Modal.Footer style={{ justifyContent: 'flex-end', gap: '0.5rem' }}>
         <Button 
           variant="secondary" 
           onClick={handleClose} 
           disabled={loading}
-          className="w-100 w-md-auto order-2 order-md-1"
+          style={{ 
+            backgroundColor: '#ffffff', 
+            color: '#000', 
+            border: '1px solid #dee2e6' 
+          }}
         >
           Cancelar
         </Button>
@@ -298,9 +322,8 @@ const PresenteForm = ({ show, handleClose, presente = null, amigoPreSelecionado 
           variant="primary" 
           onClick={handleSubmit} 
           disabled={loading}
-          className="w-100 w-md-auto order-1 order-md-2"
         >
-          {loading ? 'Salvando...' : (presente ? 'Atualizar' : 'Adicionar')}
+          {loading ? 'Salvando...' : 'Salvar'}
         </Button>
       </Modal.Footer>
     </Modal>
