@@ -188,12 +188,24 @@ const PresenteCard = ({ presente, onEdit, onDelete }) => {
               style={{ 
                   fontSize: '0.9rem', 
                   color: '#6c757d',
-                  marginBottom: 0,
+                  marginBottom: '0.5rem',
                   lineHeight: '1.5'
                 }}
               >
                 {descricao}
               </Card.Text>
+            )}
+            
+            {!isLink && (
+              <div style={{
+                fontSize: '12px',
+                color: '#6c757d',
+                textAlign: 'center',
+                marginTop: '0.5rem',
+                paddingTop: '0.5rem'
+              }}>
+                Sugestão sem link online.
+              </div>
             )}
           </div>
           </div>
