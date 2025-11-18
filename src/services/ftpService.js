@@ -9,8 +9,12 @@ const FTP_CONFIG = {
   basePath: '/public_html/presentes'
 };
 
-// URL do servidor backend (ajuste conforme necessário)
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+// URL do servidor backend
+// Em produção (Vercel), usa a API route serverless
+// Em desenvolvimento, usa o servidor local
+const BACKEND_URL = process.env.NODE_ENV === 'production' 
+  ? '/api/upload-ftp'  // API route do Vercel
+  : (process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001');
 
 export const uploadImageToFTP = async (file, amigo) => {
   try {
