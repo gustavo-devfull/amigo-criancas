@@ -12,9 +12,16 @@ const FTP_CONFIG = {
 // URL do servidor backend
 // Em produção (Vercel), usa a API route serverless
 // Em desenvolvimento, usa o servidor local
-const BACKEND_URL = process.env.NODE_ENV === 'production' 
-  ? '/api/upload-ftp'  // API route do Vercel
-  : (process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001');
+const getBackendUrl = () => {
+  if (process.env.NODE_ENV === 'production') {
+    // Em produção no Vercel, usa caminho relativo
+    return '/api/upload-ftp';
+  }
+  // Em desenvolvimento, usa servidor local
+  return process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+};
+
+const BACKEND_URL = getBackendUrl();
 
 export const uploadImageToFTP = async (file, amigo) => {
   try {
@@ -23,7 +30,12 @@ export const uploadImageToFTP = async (file, amigo) => {
     // O servidor vai gerar o nome baseado no amigo + contador (Amigo_N.extensão)
     formData.append('amigo', amigo || '');
 
-    const response = await fetch(`${BACKEND_URL}/api/upload-ftp`, {
+    // Construir URL corretamente
+    const uploadUrl = BACKEND_URL.startsWith('http') 
+      ? `${BACKEND_URL}/api/upload-ftp`  // Servidor local
+      : BACKEND_URL;  // API route do Vercel (já é o caminho completo)
+    
+    const response = await fetch(uploadUrl, {
       method: 'POST',
       body: formData
     });
