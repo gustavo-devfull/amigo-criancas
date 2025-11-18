@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Button, Alert, Spinner, Accordion, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Button, Alert, Spinner, Card, Badge } from 'react-bootstrap';
 import PresenteCard from './PresenteCard';
 import PresenteForm from './PresenteForm';
 import { getPresentes, deletePresente } from '../services/presentesService';
@@ -12,7 +12,7 @@ const ListaAmigos = () => {
   const [showForm, setShowForm] = useState(false);
   const [presenteEditando, setPresenteEditando] = useState(null);
   const [amigoFiltro, setAmigoFiltro] = useState(null);
-  const [activeKey, setActiveKey] = useState('0');
+  const [amigosExpandidos, setAmigosExpandidos] = useState({});
 
   useEffect(() => {
     loadPresentes();
@@ -57,21 +57,25 @@ const ListaAmigos = () => {
   const handleFormSuccess = (amigoNome) => {
     loadPresentes();
     
-    // Expandir o accordion do amigo após salvar
+    // Expandir o card do amigo após salvar
     if (amigoNome) {
-      const amigoIndex = AMIGOS.findIndex(amigo => amigo === amigoNome);
-      if (amigoIndex !== -1) {
-        setActiveKey(amigoIndex.toString());
-        
-        // Scroll suave até o accordion do amigo
-        setTimeout(() => {
-          const accordionItem = document.querySelector(`[data-amigo-index="${amigoIndex}"]`);
-          if (accordionItem) {
-            accordionItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          }
-        }, 100);
-      }
+      setAmigosExpandidos(prev => ({ ...prev, [amigoNome]: true }));
+      
+      // Scroll suave até o card do amigo
+      setTimeout(() => {
+        const cardItem = document.querySelector(`[data-amigo-nome="${amigoNome}"]`);
+        if (cardItem) {
+          cardItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 100);
     }
+  };
+
+  const toggleAmigo = (amigo) => {
+    setAmigosExpandidos(prev => ({
+      ...prev,
+      [amigo]: !prev[amigo]
+    }));
   };
 
   const getPresentesPorAmigo = (amigo) => {
@@ -89,15 +93,10 @@ const ListaAmigos = () => {
   }
 
   return (
-    <Container className="mt-3 mt-md-4 px-3 px-md-4">
+    <Container className="mt-3 mt-md-4 px-3 px-md-4" style={{ maxWidth: '1400px' }}>
       <Row className="mb-3 mb-md-4">
         <Col>
-          <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-            <h1 className="h4 h-md-3 mb-0">Lista de Presentes - Amigo Secreto</h1>
-            <Button variant="primary" onClick={() => handleAdd()} className="w-100 w-md-auto">
-              ➕ Adicionar Presente
-            </Button>
-          </div>
+          <h1 className="h4 h-md-2 mb-0" style={{ fontSize: 'clamp(1.5rem, 2.5vw, 2.5rem)' }}>Lista de Presentes - Amigo Secreto</h1>
         </Col>
       </Row>
 
@@ -121,58 +120,85 @@ const ListaAmigos = () => {
 
       <Row>
         <Col>
-          <Accordion activeKey={activeKey} onSelect={(k) => setActiveKey(k || '0')} className="mb-4">
+          <div className="d-flex flex-column gap-3 mb-4">
             {AMIGOS.map((amigo, index) => {
               const presentesDoAmigo = getPresentesPorAmigo(amigo);
+              const temPresentes = presentesDoAmigo.length > 0;
+              const estaExpandido = amigosExpandidos[amigo];
+              
               return (
-                <Accordion.Item 
-                  eventKey={index.toString()} 
+                <Card 
                   key={amigo}
-                  data-amigo-index={index}
+                  data-amigo-nome={amigo}
+                  style={{
+                    backgroundColor: temPresentes ? '#d4edda' : '#ffffff',
+                    border: `1px solid ${temPresentes ? '#c3e6cb' : '#e0e0e0'}`,
+                    borderRadius: '8px',
+                    transition: 'all 0.3s ease'
+                  }}
                 >
-                  <Accordion.Header>
-                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center w-100 me-2 me-md-3 gap-1 gap-md-0">
-                      <span className="text-break">
-                        <strong>{index + 1}. {amigo}</strong>
+                  <Card.Header 
+                    style={{ 
+                      cursor: 'pointer',
+                      backgroundColor: temPresentes ? '#c3e6cb' : '#f8f9fa',
+                      borderBottom: `1px solid ${temPresentes ? '#b1dfbb' : '#e0e0e0'}`
+                    }}
+                    onClick={() => toggleAmigo(amigo)}
+                  >
+                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-1 gap-md-0">
+                      <span className="text-break" style={{ fontSize: '1.1rem', fontWeight: '600' }}>
+                        {index + 1}. {amigo}
                       </span>
-                      <Badge bg={presentesDoAmigo.length > 0 ? 'success' : 'secondary'} className="flex-shrink-0">
-                        {presentesDoAmigo.length} {presentesDoAmigo.length === 1 ? 'presente' : 'presentes'}
-                      </Badge>
-                    </div>
-                  </Accordion.Header>
-                  <Accordion.Body className="px-2 px-md-3">
-                    <div className="mb-3">
-                      <Button 
-                        variant="outline-primary" 
-                        size="sm"
-                        onClick={() => handleAdd(amigo)}
-                        className="w-100 w-md-auto"
-                      >
-                        ➕ Adicionar Presente para {amigo}
-                      </Button>
-                    </div>
-                    {presentesDoAmigo.length === 0 ? (
-                      <Alert variant="light">
-                        Nenhum presente cadastrado para {amigo} ainda.
-                      </Alert>
-                    ) : (
-                      <div className="d-flex flex-column gap-3">
-                        {presentesDoAmigo.map((presente) => (
-                          <div key={presente.id} style={{ width: '100%' }}>
-                            <PresenteCard
-                              presente={presente}
-                              onEdit={handleEdit}
-                              onDelete={handleDelete}
-                            />
-                          </div>
-                        ))}
+                      <div className="d-flex align-items-center gap-2">
+                        <Badge 
+                          bg={temPresentes ? 'success' : 'secondary'} 
+                          className="flex-shrink-0" 
+                          style={{ fontSize: '0.9rem', padding: '0.5em 0.75em' }}
+                        >
+                          {presentesDoAmigo.length} {presentesDoAmigo.length === 1 ? 'presente' : 'presentes'}
+                        </Badge>
+                        <span style={{ fontSize: '1.2rem' }}>
+                          {estaExpandido ? '▼' : '▶'}
+                        </span>
                       </div>
-                    )}
-                  </Accordion.Body>
-                </Accordion.Item>
+                    </div>
+                  </Card.Header>
+                  
+                  {estaExpandido && (
+                    <Card.Body className="px-2 px-md-4 py-3">
+                      <div className="mb-3">
+                        <Button 
+                          variant="outline-primary" 
+                          size="sm"
+                          onClick={() => handleAdd(amigo)}
+                          className="w-100 w-md-auto"
+                        >
+                          ➕ Adicionar Presente para {amigo}
+                        </Button>
+                      </div>
+                      {presentesDoAmigo.length === 0 ? (
+                        <Alert variant="light">
+                          Nenhum presente cadastrado para {amigo} ainda.
+                        </Alert>
+                      ) : (
+                        <div className="d-flex flex-column gap-3">
+                          {presentesDoAmigo.map((presente) => (
+                            <div key={presente.id} style={{ width: '100%' }}>
+                              <PresenteCard
+                                presente={presente}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </Card.Body>
+                  )}
+                </Card>
               );
             })}
-          </Accordion>
+          </div>
         </Col>
       </Row>
 

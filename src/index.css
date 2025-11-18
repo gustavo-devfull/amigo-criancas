@@ -18,3 +18,66 @@ code {
   padding-bottom: 2rem;
 }
 
+/* Estilos para Cards de Presentes */
+.presente-card {
+  background: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.presente-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  border-color: #d0d0d0;
+}
+
+/* Melhorias para Desktop */
+@media (min-width: 768px) {
+  .card {
+    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+  }
+  
+  .card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .presente-card {
+    border-left: 3px solid transparent;
+  }
+  
+  .presente-card:hover {
+    border-left-color: #0d6efd;
+  }
+  
+  .btn {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .accordion-button {
+    transition: background-color 0.2s ease-in-out;
+  }
+  
+  .accordion-button:not(.collapsed) {
+    background-color: #f8f9fa;
+  }
+  
+  .accordion-button:hover {
+    background-color: #e9ecef;
+  }
+  
+  .modal-content {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Melhor espaçamento em telas grandes */
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+

@@ -166,12 +166,12 @@ const PresenteForm = ({ show, handleClose, presente = null, amigoPreSelecionado 
 
   return (
     <Modal show={show} onHide={handleClose} size="lg" centered>
-      <Modal.Header closeButton>
-        <Modal.Title className="h5 h-md-4">
+      <Modal.Header closeButton className="pb-3">
+        <Modal.Title className="h5 h-md-4" style={{ fontSize: 'clamp(1.25rem, 2vw, 1.75rem)' }}>
           {presente ? 'Editar Presente' : 'Adicionar Presente'}
         </Modal.Title>
       </Modal.Header>
-      <Modal.Body className="px-3 px-md-4">
+      <Modal.Body className="px-3 px-md-4 py-4">
         <Form.Group className="mb-3">
           <Form.Label>Amigo</Form.Label>
           <Form.Select
