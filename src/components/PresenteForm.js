@@ -128,8 +128,8 @@ const PresenteForm = ({ show, handleClose, presente = null, amigoPreSelecionado 
       }
 
       if (tipoMidia === 'nenhum') {
-        if (!formData.nome || !formData.descricao) {
-          alert('Por favor, preencha todos os campos');
+        if (!formData.nome) {
+          alert('Por favor, preencha o nome do presente');
           setLoading(false);
           return;
         }
@@ -140,8 +140,8 @@ const PresenteForm = ({ show, handleClose, presente = null, amigoPreSelecionado 
           amigo: amigoSelecionado
         };
       } else if (tipoMidia === 'link') {
-        if (!formData.nome || !formData.link || !formData.descricao) {
-          alert('Por favor, preencha todos os campos');
+        if (!formData.nome || !formData.link) {
+          alert('Por favor, preencha o nome do presente e o link');
           setLoading(false);
           return;
         }
@@ -153,8 +153,8 @@ const PresenteForm = ({ show, handleClose, presente = null, amigoPreSelecionado 
           amigo: amigoSelecionado
         };
       } else if (tipoMidia === 'upload') {
-        if (!formData.nome || !formData.descricao || (!formData.imagemFile && !formData.imagemPreview)) {
-          alert('Por favor, preencha todos os campos');
+        if (!formData.nome || (!formData.imagemFile && !formData.imagemPreview)) {
+          alert('Por favor, preencha o nome do presente e selecione uma imagem');
           setLoading(false);
           return;
         }
@@ -327,7 +327,6 @@ const PresenteForm = ({ show, handleClose, presente = null, amigoPreSelecionado 
               placeholder="Detalhes adicionais, tamanho, cor, etc."
               value={formData.descricao}
               onChange={(e) => handleInputChange('descricao', e.target.value)}
-              required
             />
           </Form.Group>
         </Form>
