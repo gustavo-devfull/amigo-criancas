@@ -105,7 +105,7 @@ const ListaAmigos = () => {
               color: '#d3d3d3'
             }}
           >
-            Lista de Sugestões de Amigo Secreto
+            Lista de Sugestões de presentes para as crianças
           </h1>
           <p 
             style={{ 
@@ -116,6 +116,7 @@ const ListaAmigos = () => {
               opacity: 0.8
             }}
           >
+            Marque o presente como comprado quando você escolher o presente comprado.
             Você pode cadastrar o presente com uma descrição, com um link ou com uma foto.
           </p>
         </Col>
@@ -137,16 +138,17 @@ const ListaAmigos = () => {
           const quantidadePresentes = presentesDoAmigo.length;
           const porcentagemProgresso = Math.min((quantidadePresentes / 3) * 100, 100);
           
-          const amigosComBordaLaranja = ['Alex', 'Nete', 'Fernando', 'Carol', 'Diogo', 'Diana'];
+          // Cores de borda personalizadas (se necessário)
+          const amigosComBordaLaranja = [];
           const temBordaLaranja = amigosComBordaLaranja.includes(amigo);
           
-          const amigosComBordaRoxa = ['Valeria', 'Pasé', 'Kauê', 'Isabel', 'Thien', 'Guto', 'Mônada'];
+          const amigosComBordaRoxa = [];
           const temBordaRoxa = amigosComBordaRoxa.includes(amigo);
           
-          const amigosComBordaRosa = ['Osmar', 'Mud', 'Ana', 'Marina', 'Nair', 'Karina', 'Bruno'];
+          const amigosComBordaRosa = [];
           const temBordaRosa = amigosComBordaRosa.includes(amigo);
           
-          const amigosComBordaVermelha = ['Tiago', 'Flávia', 'Firu', 'Claudia'];
+          const amigosComBordaVermelha = [];
           const temBordaVermelha = amigosComBordaVermelha.includes(amigo);
           
           return (
@@ -255,6 +257,7 @@ const ListaAmigos = () => {
                             presente={presente}
                             onEdit={handleEdit}
                             onDelete={handleDelete}
+                            onUpdate={loadPresentes}
                           />
                         ))}
                       </div>

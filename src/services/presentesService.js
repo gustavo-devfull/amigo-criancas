@@ -66,6 +66,17 @@ export const deletePresente = async (id) => {
   }
 };
 
+// Marcar/desmarcar presente como comprado
+export const toggleComprado = async (id, comprado) => {
+  try {
+    const presenteRef = doc(db, PRESENTES_COLLECTION, id);
+    await updateDoc(presenteRef, { comprado: comprado });
+  } catch (error) {
+    console.error('Erro ao atualizar status de comprado:', error);
+    throw error;
+  }
+};
+
 // Upload de imagem via FTP - salva em public_html/presentes/[amigo]
 // O nome do arquivo será alterado para Amigo_N.extensão
 export const uploadImage = async (file, amigo) => {

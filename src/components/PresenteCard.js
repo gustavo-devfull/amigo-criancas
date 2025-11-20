@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { Card, Modal } from 'react-bootstrap';
+import { toggleComprado } from '../services/presentesService';
 
-const PresenteCard = ({ presente, onEdit, onDelete }) => {
+const PresenteCard = ({ presente, onEdit, onDelete, onUpdate }) => {
   const [showLightbox, setShowLightbox] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  
+  const isComprado = presente.comprado === true;
   
   // Determinar o nome do presente
   const nomePresente = presente.nome || 'Presente';
@@ -17,113 +22,135 @@ const PresenteCard = ({ presente, onEdit, onDelete }) => {
   const temImagem = presente.tipo === 'upload' && presente.imagemStorage;
   const imagemSrc = temImagem ? presente.imagemStorage : null;
 
+  const handleToggleComprado = async () => {
+    if (isToggling) return;
+    
+    setIsToggling(true);
+    try {
+      await toggleComprado(presente.id, !isComprado);
+      if (onUpdate) {
+        onUpdate();
+      }
+    } catch (error) {
+      console.error('Erro ao marcar como comprado:', error);
+      alert('Erro ao atualizar status. Tente novamente.');
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
   return (
-    <div style={{ position: 'relative', marginBottom: '1rem' }}>
+    <div 
+      style={{ position: 'relative', marginBottom: '1rem' }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Ícone de editar fora do card, acima e à direita */}
-      <button
-        onClick={() => onEdit && onEdit(presente)}
-        style={{
-          position: 'absolute',
-          top: '-12px',
-          right: '-12px',
-          width: '32px',
-          height: '32px',
-          backgroundColor: '#a8e6cf',
-          border: 'none',
-          borderRadius: '50%',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-          zIndex: 10,
-          transition: 'all 0.2s'
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.backgroundColor = '#8dd3c0';
-          e.target.style.transform = 'scale(1.1)';
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.backgroundColor = '#a8e6cf';
-          e.target.style.transform = 'scale(1)';
-        }}
-        title="Editar presente"
-      >
-        <svg 
-          width="16" 
-          height="16" 
-          viewBox="0 0 16 16" 
-          fill="none" 
-          xmlns="http://www.w3.org/2000/svg"
-          style={{ color: '#2d8659' }}
+      {!isComprado && (
+        <button
+          onClick={() => onEdit && onEdit(presente)}
+          style={{
+            position: 'absolute',
+            top: '-12px',
+            right: '-12px',
+            width: '32px',
+            height: '32px',
+            backgroundColor: '#a8e6cf',
+            border: 'none',
+            borderRadius: '50%',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+            zIndex: 10,
+            transition: 'all 0.2s',
+            opacity: isHovered ? 1 : 0,
+            pointerEvents: isHovered ? 'auto' : 'none'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = '#8dd3c0';
+            e.target.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = '#a8e6cf';
+            e.target.style.transform = 'scale(1)';
+          }}
+          title="Editar presente"
         >
-          <path 
-            d="M11.3333 2.00004C11.5084 1.82492 11.7163 1.68606 11.9439 1.59131C12.1715 1.49657 12.4145 1.44775 12.66 1.44775C12.9055 1.44775 13.1485 1.49657 13.3761 1.59131C13.6037 1.68606 13.8116 1.82492 13.9867 2.00004C14.1618 2.17515 14.3006 2.38309 14.3954 2.61067C14.4901 2.83825 14.5389 3.08124 14.5389 3.32671C14.5389 3.57218 14.4901 3.81517 14.3954 4.04275C14.3006 4.27033 14.1618 4.47827 13.9867 4.65338L5.17333 13.4667L1.33333 14.6667L2.53333 10.8267L11.3333 2.00004Z" 
-            stroke="currentColor" 
-            strokeWidth="1.5" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 16 16" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+            style={{ color: '#2d8659' }}
+          >
+            <path 
+              d="M11.3333 2.00004C11.5084 1.82492 11.7163 1.68606 11.9439 1.59131C12.1715 1.49657 12.4145 1.44775 12.66 1.44775C12.9055 1.44775 13.1485 1.49657 13.3761 1.59131C13.6037 1.68606 13.8116 1.82492 13.9867 2.00004C14.1618 2.17515 14.3006 2.38309 14.3954 2.61067C14.4901 2.83825 14.5389 3.08124 14.5389 3.32671C14.5389 3.57218 14.4901 3.81517 14.3954 4.04275C14.3006 4.27033 14.1618 4.47827 13.9867 4.65338L5.17333 13.4667L1.33333 14.6667L2.53333 10.8267L11.3333 2.00004Z" 
+              stroke="currentColor" 
+              strokeWidth="1.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      )}
       
       <Card 
         style={{ 
           width: '100%',
-          border: '0.5px solid #ffffff',
+          border: isComprado ? '2px solid #28a745' : '0.5px solid #ffffff',
           borderRadius: '8px',
-          backgroundColor: '#ffffff',
+          backgroundColor: isComprado ? '#28a745' : '#ffffff',
           position: 'relative',
+          boxShadow: isComprado ? '0 4px 8px rgba(40, 167, 69, 0.2)' : 'none',
         }}
       >
       <Card.Body style={{ padding: '1rem', position: 'relative' }}>
-        
-        <div style={{ 
-          display: 'flex', 
-          gap: '0.75rem'
-        }}>
-          {/* Coluna 1: Foto */}
-            {temImagem && (
-            <div 
+        {/* Imagem em linha completa quando presente */}
+        {temImagem && (
+          <div 
+            style={{ 
+              width: '100%',
+              marginBottom: '1rem',
+              borderRadius: '4px',
+              overflow: 'hidden',
+              backgroundColor: '#f0f0f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              maxHeight: '300px'
+            }}
+            onClick={() => setShowLightbox(true)}
+          >
+            <img 
+              src={imagemSrc}
+              alt={nomePresente}
               style={{ 
-                flexShrink: 0, 
-                width: '100px',
-                height: '100px',
-                borderRadius: '4px',
-                overflow: 'hidden',
-                backgroundColor: '#f0f0f0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
+                width: '100%',
+                height: 'auto',
+                maxHeight: '300px',
+                objectFit: 'contain',
+                borderRadius: '4px'
               }}
-              onClick={() => setShowLightbox(true)}
-            >
-              <img 
-                src={imagemSrc}
-                alt={nomePresente}
-                  style={{ 
-                    width: '100%',
-                    height: '100%',
-                  objectFit: 'contain',
-                  borderRadius: '4px'
-                  }}
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
-              </div>
-            )}
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          </div>
+        )}
 
-          {/* Coluna 2: Nome e Observação */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Dados do presente */}
+        <div style={{ width: '100%' }}>
             {isLink ? (
               <>
                 <Card.Title 
                   style={{ 
                     fontSize: '1rem', 
                     fontWeight: '600',
-                    color: '#212529',
+                    color: isComprado ? '#ffffff' : '#212529',
                     margin: 0,
                     marginBottom: '0.5rem'
                   }}
@@ -133,8 +160,8 @@ const PresenteCard = ({ presente, onEdit, onDelete }) => {
                     <button
                       onClick={() => window.open(presente.link, '_blank', 'noopener,noreferrer')}
                       style={{ 
-                        backgroundColor: '#0d6efd',
-                        color: '#ffffff',
+                        backgroundColor: isComprado ? '#ffffff' : '#0d6efd',
+                        color: isComprado ? '#28a745' : '#ffffff',
                         border: 'none',
                         borderRadius: '4px',
                         padding: '0.375rem 0.75rem',
@@ -147,10 +174,10 @@ const PresenteCard = ({ presente, onEdit, onDelete }) => {
                         transition: 'background-color 0.2s'
                       }}
                       onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = '#0b5ed7';
+                        e.target.style.backgroundColor = isComprado ? '#f0f0f0' : '#0b5ed7';
                       }}
                       onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = '#0d6efd';
+                        e.target.style.backgroundColor = isComprado ? '#ffffff' : '#0d6efd';
                       }}
                     >
                       Ver sugestão
@@ -177,7 +204,7 @@ const PresenteCard = ({ presente, onEdit, onDelete }) => {
                 style={{ 
                   fontSize: '1rem', 
                   fontWeight: '600',
-                  color: '#212529',
+                  color: isComprado ? '#ffffff' : '#212529',
                   margin: 0,
                   marginBottom: descricao ? '0.5rem' : 0
                 }}
@@ -190,7 +217,7 @@ const PresenteCard = ({ presente, onEdit, onDelete }) => {
               <Card.Text 
               style={{ 
                   fontSize: '0.9rem', 
-                  color: '#6c757d',
+                  color: isComprado ? '#ffffff' : '#6c757d',
                   marginBottom: '0.5rem',
                   lineHeight: '1.5'
                 }}
@@ -202,7 +229,7 @@ const PresenteCard = ({ presente, onEdit, onDelete }) => {
             {!isLink && (
               <div style={{
                 fontSize: '12px',
-                color: '#6c757d',
+                color: isComprado ? '#ffffff' : '#6c757d',
                 textAlign: 'center',
                 marginTop: '0.5rem',
                 paddingTop: '0.5rem'
@@ -210,8 +237,122 @@ const PresenteCard = ({ presente, onEdit, onDelete }) => {
                 Sugestão sem link online.
               </div>
             )}
-          </div>
-          </div>
+            
+            {/* Botão de marcar como comprado */}
+            <div style={{ marginTop: '0.75rem' }}>
+              <button
+                onClick={handleToggleComprado}
+                disabled={isToggling}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  backgroundColor: isComprado ? '#dc3545' : '#28a745',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  cursor: isToggling ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  transition: 'all 0.2s',
+                  opacity: isToggling ? 0.6 : 1
+                }}
+                onMouseEnter={(e) => {
+                  if (!isToggling) {
+                    e.target.style.backgroundColor = isComprado ? '#c82333' : '#218838';
+                    e.target.style.transform = 'scale(1.02)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = isComprado ? '#dc3545' : '#28a745';
+                  e.target.style.transform = 'scale(1)';
+                }}
+                title={isComprado ? 'Marcar como não comprado' : 'Marcar como comprado'}
+              >
+                {isToggling ? (
+                  <>
+                    <svg 
+                      width="14" 
+                      height="14" 
+                      viewBox="0 0 16 16" 
+                      fill="none" 
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{ 
+                        animation: 'spin 1s linear infinite',
+                        display: 'inline-block'
+                      }}
+                    >
+                      <circle 
+                        cx="8" 
+                        cy="8" 
+                        r="7" 
+                        stroke="currentColor" 
+                        strokeWidth="1.5" 
+                        strokeDasharray="44" 
+                        strokeDashoffset="22"
+                        strokeLinecap="round"
+                        fill="none"
+                        opacity="0.3"
+                      />
+                      <circle 
+                        cx="8" 
+                        cy="8" 
+                        r="7" 
+                        stroke="currentColor" 
+                        strokeWidth="1.5" 
+                        strokeDasharray="44" 
+                        strokeDashoffset="11"
+                        strokeLinecap="round"
+                        fill="none"
+                      />
+                    </svg>
+                    {isComprado ? 'Desmarcando...' : 'Marcando...'}
+                  </>
+                ) : isComprado ? (
+                  <>
+                    <svg 
+                      width="14" 
+                      height="14" 
+                      viewBox="0 0 16 16" 
+                      fill="none" 
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path 
+                        d="M4 8L7 11L12 4" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    Presente Comprado
+                  </>
+                ) : (
+                  <>
+                    <svg 
+                      width="14" 
+                      height="14" 
+                      viewBox="0 0 16 16" 
+                      fill="none" 
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path 
+                        d="M4 8L7 11L12 4" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    Marcar como Comprado
+                  </>
+                )}
+              </button>
+            </div>
+        </div>
         </Card.Body>
 
       {/* Lightbox Modal */}
