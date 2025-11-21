@@ -89,3 +89,29 @@ export const uploadImage = async (file, amigo) => {
   }
 };
 
+// Migração: atualizar nome do amigo de "GAEL" para "Gael"
+export const migrarGael = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, PRESENTES_COLLECTION));
+    const updates = [];
+    
+    querySnapshot.forEach((docSnapshot) => {
+      const data = docSnapshot.data();
+      if (data.amigo === 'GAEL') {
+        updates.push(
+          updateDoc(doc(db, PRESENTES_COLLECTION, docSnapshot.id), {
+            amigo: 'Gael'
+          })
+        );
+      }
+    });
+    
+    await Promise.all(updates);
+    console.log(`Migração concluída: ${updates.length} presente(s) atualizado(s)`);
+    return updates.length;
+  } catch (error) {
+    console.error('Erro ao migrar presentes do GAEL:', error);
+    throw error;
+  }
+};
+
